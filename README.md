@@ -1,1 +1,3 @@
-# Jogo_Da_Minoria
+# Perceptron de várias camadas
+
+por João Paulo Paiva Lima
