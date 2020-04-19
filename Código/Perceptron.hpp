@@ -32,9 +32,10 @@ struct camada{
 	
 	int linhas;
 	int colunas;
-		
-	float **m;
-	float *bias;//O valores bases dos nodulos sao guardados junto aos pesos pois ficilita o processo de treino.
+    std::string funcao = "relu";
+    
+	double **m; //Matriz dos pesos
+	double *bias;//O valores bases dos nodulos sao guardados junto aos pesos pois ficilita o processo de treino.
 };
 	
 
@@ -42,10 +43,7 @@ class Perceptron{
 	public:
 	
 		int numInputs; //Numero de entradas
-		float *inputs; //Vetor de entrada
-		
-		int numOutputs;//Numero de saidas
-		float *outputs;//Vetor de saidas
+		double *inputs; //Vetor de entrada
 		
 		int numCamadas; //Numero de camadas de conexoes(que e uma unidade menor que as camadas de nodulos)
 		camada *camadas;//As camadas (pesos e bias da rede)
@@ -57,7 +55,7 @@ class Perceptron{
 		 *Recebe a localizaçao na memoria de um vetor de camadas(de um objeto), o tamanho desse vetor,
 		 *o vetor que representa a topologia da rede e os pesos basicos das conexoes(se for zero,
 		 *o peso dado sera aleatorio).*/
-		static void gerarCamadas(camada *camadas, int numCamadas, int *disposicaoCamadas, float pesoBase){
+		static void gerarCamadas(camada *camadas, int numCamadas, int *disposicaoCamadas, double pesoBase){
 			
 			int linhas, colunas; //variaveis auxiliares para organizaçao do codigo.
 			
@@ -70,26 +68,26 @@ class Perceptron{
 				camadas[k].colunas = colunas;
 				camadas[k].linhas = linhas;
 				
-				camadas[k].bias = new float[linhas]; //criaçao dos valores basicos (bias) dos vetores de nodulos.
-				camadas[k].m = new float *[linhas];  //a liguagem exige a criaçao de uma dimensao de cada vez.
+				camadas[k].bias = new double[linhas]; //criaçao dos valores basicos (bias) dos vetores de nodulos.
+				camadas[k].m = new double *[linhas];  //a liguagem exige a criaçao de uma dimensao de cada vez.
 				
 				for(int i = 0; i < linhas; i++) //laço para as linhas da matriz de peso
 				{
 					
 					//Os bias pertecem aos nodulos posteriores, entao sao criados nesse laço
 					if(pesoBase > -0.000001 and pesoBase < 0.000001)
-						camadas[k].bias[i] = (std::rand() % 1000000)/1000000.0;
+						camadas[k].bias[i] = (std::rand() % 1000000)/500000.0 - 1;
 					else
 						camadas[k].bias[i] = pesoBase;
 					//fim da definiçao de bias
 					
-					camadas[k].m[i] = new float[colunas]; //criaçao da segunda dimensao.
+					camadas[k].m[i] = new double[colunas]; //criaçao da segunda dimensao.
 					
 					for(int j = 0; j < colunas; j++)//Laço para as colunas da matriz de peso.
 					{
-						//definiçao de pesos. Se < 10, entao e um numero aleatorio
+						//definiçao de pesos. Se pesoBase == 0, entao e um numero aleatorio
 						if(pesoBase > -0.000001 and pesoBase < 0.000001)
-							camadas[k].m[i][j] = (std::rand() % 1000000)/1000000.0;
+							camadas[k].m[i][j] = (std::rand() % 1000000)/500000.0 - 1;
 						else
 							camadas[k].m[i][j] = pesoBase;
 					}
@@ -102,14 +100,16 @@ class Perceptron{
 		/*Ele recebe o tamanho da rede, sua disposiçao em um vetor de inteiros,
 		 *cada valor do vetor representa o numero de nodulos da camada do indice,
 		 *e o peso base das conexoes.*/
-		Perceptron(int numCamadas, int *disposicaoCamadas, float pesoBase){
+		Perceptron(int numCamadas, int *disposicaoCamadas, double pesoBase, int semente = 0){
 			
+            if(semente ==0)
+                std::srand(time(NULL));
+            else
+                std::srand(semente);
+            
 			//definiçao de inputs
 			this->numInputs = disposicaoCamadas[0];
-			this->inputs = new float[this->numInputs];
-			
-			//definiçao do numero de outputs
-			this->numOutputs = disposicaoCamadas[numCamadas];
+			this->inputs = new double[this->numInputs];
 			
 			//definiçao do numero de camadas
 			this->numCamadas = numCamadas;
@@ -121,27 +121,23 @@ class Perceptron{
 		}
 		
 		//GETS E SETS
-		void setInputs (float *inputs){
+		void setInputs (double *inputs){
 			this->inputs = inputs;
 		}
-		
-		void getOutputs(){
-			for(int i = 0; i < this->numOutputs; i++)
-				std::cout << this->outputs[i];
-		}
+        
 		//[FIM]GETS E SETS
 				
 		//funçao que da o resultado da multiplicaçao de uma matriz por um vetor.
-		float* multiplicar(int iCamada, float *vetor){
+		double* multiplicar(int iCamada, double *vetor){
 			
 			//variaveis auxiliares
 			int linhas = this->camadas[iCamada].linhas;
 			int colunas = this->camadas[iCamada].colunas;
 			
-			float sum;
+			double sum;
 			
-			float *saida; //Vetor resultante da multiplicaçao
-			saida = new float[linhas];
+			double *saida; //Vetor resultante da multiplicaçao
+			saida = new double[linhas];
 			 
 			for(int i = 0; i < linhas; i++)
 			{
@@ -157,46 +153,57 @@ class Perceptron{
 		}
 		
 		
-		void ativar(){
+		double* ativar(int camadaFim = 0){
 			
-			float *saida;
+            if(camadaFim == 0)
+                camadaFim = this->numCamadas;
+            
+			double *saida;
 			//Multiplicaçao dos inputs
 			saida = this->multiplicar(0, this->inputs); 
 			
 			//Aplicaçao da funçao de ativacao. Somando os bias.
 			for(int i = 0; i < this->camadas[0].linhas; i++)
-				saida[i] = reLU(saida[i] + this->camadas[0].bias[i]);
+				saida[i] = aplicarFuncao(saida[i] + this->camadas[0].bias[i], this->camadas[0].funcao);
 			
 			//Ativaçao das camadas "ocultas".
-			for(int i = 1; i < this->numCamadas -1; i++)
+			for(int i = 1; i < camadaFim; i++)
 			{
 				saida = this->multiplicar(i, saida);
 				
 				for(int j = 0; j < this->camadas[i].linhas; j++)
-					saida[j] = reLU(saida[j] + this->camadas[i].bias[j]);
+					saida[j] = aplicarFuncao(saida[j] + this->camadas[i].bias[j], this->camadas[i].funcao);
 			}
-			
-			//Multiplicaçao dos outputs.
-			saida = this->multiplicar(this->numCamadas-1, saida);
-			
-			//Ativaçao dos outputs. (falta a implementaçao de uma funçao de saida, provavelmente softmax)
-			for(int i = 0; i < this->numOutputs; i++)
-			{
-				saida[i] = saida[i] + this->camadas[this->numCamadas - 1].bias[i];
-			}
-					
-			this->outputs = saida;
+			return saida;
 		}
 		
 		//FUNCOES DE ATIVAÇAO
-		float reLU(float x){
+        
+        double aplicarFuncao(double x , std::string funcao){
+            if(funcao == "relu")
+                return relu(x);
+            else if(funcao == "lRelu" or funcao == "lrelu" or funcao == "leakyRelu")
+                return lRelu(x);
+            else if(funcao == "sigmoid" or funcao == "Sigmoid" or funcao == "sig")
+                return sigmoid(x);
+            else if(funcao == "tanH" or funcao == "tanh" or funcao == "tanhx")
+                return tanh(x);
+            else
+                throw std::invalid_argument("Funcao de ativacao invalida: " + funcao);
+        }
+        
+        double sigmoid(int x){
+            return 1/(1 + exp(x));
+        }
+        
+		double relu(double x){
 			if(x >= 0)
 				return x;
 			else
 				return 0;
 		}
 		
-		float lReLU(float x){
+		double lRelu(double x){
 			if(x >= 0)
 				return x;
 			else
@@ -212,7 +219,10 @@ class Perceptron{
 			
 			for(int k = 0; k < this->numCamadas; k++)
 			{
-				for(int i = 0; i< this->camadas[k].linhas; i++)
+                for(int i = 0; i < this->camadas[k].linhas; i++)
+                    std::cout <<" "<<this->camadas[k].bias[i] <<"/";
+                std::cout << std::endl;
+				for(int i = 0; i < this->camadas[k].linhas; i++)
 				{
 					for(int j = 0; j< this->camadas[k].colunas; j++)
 						std::cout<< this->camadas[k].m[i][j] << "|";

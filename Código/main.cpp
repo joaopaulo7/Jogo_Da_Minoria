@@ -28,18 +28,19 @@
 
 int main()
 {
-	std::srand(time(NULL));
-	float entradas[3] = {1, 1, 3};
-	int forma[4] = {3, 2, 5, 1};
+    int  o = 2;
+    std::srand(time(NULL));
+	double entradas[4] = {1, 1, 1, 1};
+	int forma[7] = {4, 1, 6, 1, 4, 8, 2};
 	
-	Perceptron p(3, forma, 1);
+	Perceptron p(5, forma, 0, std::rand());
 	
 	p.mostrar();
 	
 	p.setInputs(entradas);
 	
-	p.ativar();
+	double* v = p.ativar(o);
 	
-	p.getOutputs();
+	for(int i = 0; i < forma[o]; i++)
+        printf("%.9f \n", v[i]);
 }
-
