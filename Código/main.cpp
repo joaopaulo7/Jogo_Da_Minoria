@@ -31,9 +31,9 @@ int main()
     int  o = 5;
     std::srand(time(NULL));
 	double entradas[4] = {1, 1, 1, 1};
-	int forma[7] = {4, 1, 6, 1, 4, 8, 2};
+	int forma[7] = {4, 1, 6, 1, 3, 8, 2};
 	
-	Perceptron p(5, forma, 0, std::rand());
+	Perceptron p(7, forma, 0, std::rand());
 	
 	p.mostrar();
 	
@@ -42,6 +42,8 @@ int main()
     p.mostrarNodes();
     
     std::cout << "-------------------------------" << std::endl;
+    
+    p.mostrar();
     
 	double* v = p.ativar(o);
 	

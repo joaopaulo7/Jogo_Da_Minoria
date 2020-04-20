@@ -41,7 +41,7 @@ struct camada{
 	
 
 class Perceptron{
-	public:
+	private:
 	
 		int numInputs; //Numero de entradas
 		double *inputs; //Vetor de entrada
@@ -65,7 +65,7 @@ class Perceptron{
 				
 				linhas = disposicaoCamadas[k + 1]; //[k + 1] pois as linhas representam o proximo vetor de nodulos 
 				colunas = disposicaoCamadas[k];    //colunas representam o vetor de nodulos anterior
-				
+                
 				camadas[k].colunas = colunas;
 				camadas[k].linhas = linhas;
 				
@@ -99,12 +99,27 @@ class Perceptron{
 			}
 		}
 		
-        static void limparCamada(int tam, camada c){
-            for (int i = 0; i < tam; i ++)
-                c.valNodulos = NULL;
+        static camada copiarCamada(camada c){
+            camada c1;
+            c1.linhas = c.linhas;
+            c1.colunas = c.colunas;
+            c1.funcao = c.funcao;
+            c1.bias = new double[c1.linhas];
+            c1.valNodulos = new double[c1.linhas];
+            c1.m = new double *[c1.linhas];
+            for(int i = 0; i < c1.linhas; i++)
+			{
+                c1.bias[i] = c.bias[i];
+                c1.valNodulos[i] = c.valNodulos[i];
+                
+                c1.m[i] = new double [c1.colunas];
+                for(int j = 0; j < c1.colunas; j++)
+                    c1.m[i][j] = c.m[i][j];
+            }
+            return c1;
         }
         
-        
+    public:
 		//Construtor.
 		
 		/*Ele recebe o tamanho da rede, sua disposiçao em um vetor de inteiros,
@@ -117,23 +132,39 @@ class Perceptron{
             else
                 std::srand(semente);
             
+            this->numCamadas--;
+            
 			//definiçao de inputs
 			this->numInputs = disposicaoCamadas[0];
 			this->inputs = new double[this->numInputs];
 			
 			//definiçao do numero de camadas
 			this->numCamadas = numCamadas;
-			this->camadas = new camada[numCamadas];
+			this->camadas = new camada [numCamadas];
 			
 			//Chama um procedimento estatico para definir as camadas da rede. 
 			Perceptron::gerarCamadas(this->camadas, numCamadas, disposicaoCamadas,pesoBase);
-				
 		}
 		
 		//GETS E SETS
-		void setInputs (double *inputs){
+		void setInputs(double *inputs){
 			this->inputs = inputs;
 		}
+        
+        int getNumCamadas(){
+            return this->numCamadas;
+        }
+        
+        camada getCamada(int i){
+            return this->copiarCamada(this->camadas[i]);
+        }
+        
+        camada* getCamadas(){
+            camada *rede = new camada[this->numCamadas];
+            for (int i = 0; i < this->numCamadas; i++)
+                rede[i] = this->copiarCamada(this->camadas[i]);
+            return rede;
+        }
         
 		//[FIM]GETS E SETS
 				
@@ -161,7 +192,7 @@ class Perceptron{
 		double* ativar(int camadaFim = 0){
 			
             if(camadaFim == 0)
-                camadaFim = this->numCamadas;
+                camadaFim = this->numCamadas-1;
             
 			//Multiplicaçao dos inputs
 			this->multiplicar(0, this->inputs, this->camadas[0].valNodulos); 
