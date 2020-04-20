@@ -34,8 +34,9 @@ struct camada{
 	int colunas;
     std::string funcao = "relu";
     
-	double **m; //Matriz dos pesos
-	double *bias;//O valores bases dos nodulos sao guardados junto aos pesos pois ficilita o processo de treino.
+	double **m = NULL; //Matriz dos pesos
+	double *bias = NULL;//O valores bases dos nodulos sao guardados junto aos pesos pois ficilita o processo de treino.
+    double *valNodulos = NULL; //Valores que deixaram cada nodulo.
 };
 	
 
@@ -69,11 +70,14 @@ class Perceptron{
 				camadas[k].linhas = linhas;
 				
 				camadas[k].bias = new double[linhas]; //criaçao dos valores basicos (bias) dos vetores de nodulos.
+                camadas[k].valNodulos = new double[linhas]; //criaçao dos vetores de nodulos.
 				camadas[k].m = new double *[linhas];  //a liguagem exige a criaçao de uma dimensao de cada vez.
 				
 				for(int i = 0; i < linhas; i++) //laço para as linhas da matriz de peso
 				{
-					
+                    //verar os valores dos nodulos
+                    camadas[k].valNodulos[i] = 0;
+                    
 					//Os bias pertecem aos nodulos posteriores, entao sao criados nesse laço
 					if(pesoBase > -0.000001 and pesoBase < 0.000001)
 						camadas[k].bias[i] = (std::rand() % 1000000)/500000.0 - 1;
@@ -85,7 +89,7 @@ class Perceptron{
 					
 					for(int j = 0; j < colunas; j++)//Laço para as colunas da matriz de peso.
 					{
-						//definiçao de pesos. Se pesoBase == 0, entao e um numero aleatorio
+                        //definiçao de pesos. Se pesoBase == 0, entao e um numero aleatorio
 						if(pesoBase > -0.000001 and pesoBase < 0.000001)
 							camadas[k].m[i][j] = (std::rand() % 1000000)/500000.0 - 1;
 						else
@@ -95,6 +99,12 @@ class Perceptron{
 			}
 		}
 		
+        static void limparCamada(int tam, camada c){
+            for (int i = 0; i < tam; i ++)
+                c.valNodulos = NULL;
+        }
+        
+        
 		//Construtor.
 		
 		/*Ele recebe o tamanho da rede, sua disposiçao em um vetor de inteiros,
@@ -128,16 +138,13 @@ class Perceptron{
 		//[FIM]GETS E SETS
 				
 		//funçao que da o resultado da multiplicaçao de uma matriz por um vetor.
-		double* multiplicar(int iCamada, double *vetor){
+		void multiplicar(int iCamada, double *vetor, double *saida){
 			
 			//variaveis auxiliares
 			int linhas = this->camadas[iCamada].linhas;
 			int colunas = this->camadas[iCamada].colunas;
 			
 			double sum;
-			
-			double *saida; //Vetor resultante da multiplicaçao
-			saida = new double[linhas];
 			 
 			for(int i = 0; i < linhas; i++)
 			{
@@ -148,8 +155,6 @@ class Perceptron{
 					
 				saida[i] = sum;
 			}
-			
-			return saida; //Retorna a posiçao na memoria do vetor resultante.
 		}
 		
 		
@@ -158,23 +163,28 @@ class Perceptron{
             if(camadaFim == 0)
                 camadaFim = this->numCamadas;
             
-			double *saida;
 			//Multiplicaçao dos inputs
-			saida = this->multiplicar(0, this->inputs); 
+			this->multiplicar(0, this->inputs, this->camadas[0].valNodulos); 
 			
 			//Aplicaçao da funçao de ativacao. Somando os bias.
 			for(int i = 0; i < this->camadas[0].linhas; i++)
-				saida[i] = aplicarFuncao(saida[i] + this->camadas[0].bias[i], this->camadas[0].funcao);
-			
+				this->camadas[0].valNodulos[i] = aplicarFuncao(this->camadas[0].valNodulos[i] + this->camadas[0].bias[i], this->camadas[0].funcao);
+            
 			//Ativaçao das camadas "ocultas".
 			for(int i = 1; i < camadaFim; i++)
 			{
-				saida = this->multiplicar(i, saida);
+				this->multiplicar(i, this->camadas[i - 1].valNodulos, this->camadas[i].valNodulos);
 				
 				for(int j = 0; j < this->camadas[i].linhas; j++)
-					saida[j] = aplicarFuncao(saida[j] + this->camadas[i].bias[j], this->camadas[i].funcao);
+					this->camadas[i].valNodulos[j] = aplicarFuncao(this->camadas[i].valNodulos[j] + this->camadas[i].bias[j], this->camadas[i].funcao);
 			}
-			return saida;
+            
+            //Cria um ponteiro de vetor para o retorno e o carrega dos resultados da ultima camada 
+            double *saida = new double[camadas[camadaFim - 1].linhas];
+            for(int i = 0; i < this->camadas[camadaFim - 1 ].linhas; i++)
+                saida[i] = this->camadas[camadaFim - 1].valNodulos[i];
+            
+            return saida;
 		}
 		
 		//FUNCOES DE ATIVAÇAO
@@ -231,6 +241,17 @@ class Perceptron{
 				std::cout << std::endl;
 			}
 		}
+        
+        void mostrarNodes(){
+            for(int k = 0; k < this->numCamadas; k++)
+			{
+                for(int i = 0; i < this->camadas[k].linhas; i++)
+                {
+                    std::cout << this->camadas[k].valNodulos[i] << "/ ";
+                }
+                std::cout << std::endl << std::endl;
+            }
+        }
 		//[FIM]FUNÇOES DE DEBUG
 };
 

@@ -28,7 +28,7 @@
 
 int main()
 {
-    int  o = 2;
+    int  o = 5;
     std::srand(time(NULL));
 	double entradas[4] = {1, 1, 1, 1};
 	int forma[7] = {4, 1, 6, 1, 4, 8, 2};
@@ -39,8 +39,14 @@ int main()
 	
 	p.setInputs(entradas);
 	
+    p.mostrarNodes();
+    
+    std::cout << "-------------------------------" << std::endl;
+    
 	double* v = p.ativar(o);
 	
+    p.mostrarNodes();
+    
 	for(int i = 0; i < forma[o]; i++)
         printf("%.9f \n", v[i]);
 }
