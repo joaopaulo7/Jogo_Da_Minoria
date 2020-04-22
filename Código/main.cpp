@@ -28,27 +28,42 @@
 
 int main()
 {
-    int  o = 5;
-    std::srand(time(NULL));
-	double entradas[4] = {1, 1, 1, 1};
-	int forma[7] = {4, 1, 6, 1, 3, 8, 2};
+    float entradas[518400];
+    
+    for (int i = 0; i < 518400; i++)
+    {
+        entradas[i] = (std::rand()%16777216)/16777216;
+    }
+        
+	int forma[5] = {518400, 720, 512, 256, 100};
+    
+    std::string s[5] = {"relu", "relu", "relu", "softmax"};
 	
-	Perceptron p(7, forma, 0, std::rand());
+	Perceptron p(5, forma, 0, s);
 	
-	p.mostrar();
+	//p.mostrar();
 	
 	p.setInputs(entradas);
 	
-    p.mostrarNodes();
+    //p.mostrarNodes();
     
-    std::cout << "-------------------------------" << std::endl;
+    //std::cout << "-------------------------------" << std::endl;
     
-    p.mostrar();
+    //p.mostrar();
     
-	double* v = p.ativar(o);
+	float* v = p.ativar(0);
 	
-    p.mostrarNodes();
+    //p.mostrarNodes();
     
-	for(int i = 0; i < forma[o]; i++)
+	for(int i = 0; i < 100; i++)
+        printf("%.9f \n", v[i]);
+    int n;
+    std::cin >> n;
+    
+    v = p.ativar(0);
+	
+    //p.mostrarNodes();
+    
+	for(int i = 0; i < 100; i++)
         printf("%.9f \n", v[i]);
 }
